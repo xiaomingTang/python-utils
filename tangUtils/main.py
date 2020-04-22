@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Dict, Callable, TypeVar
 import os, random, subprocess, codecs, json, socket, webbrowser, shutil, re, sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 """
@@ -408,3 +408,57 @@ class Json(File):
   def toAbsPath(self) -> "Json":
     self.path = os.path.abspath(self.path).replace("\\", "/")
     return self
+
+def getInputFiles():
+  files = []
+  for arg in sys.argv[1:]:
+    base = Base(arg)
+    if base.isFile:
+      files.append(File(arg))
+    elif base.isDir:
+      for f in Dir(arg).allFiles:
+        files.append(f)
+  return files
+
+Callback = Callable[[], None]
+
+class Cmd:
+  prompt: str
+  callback: Callback
+  next: List["Cmd"]
+
+  def __init__(self, prompt: str, callback: Callback=None, next: List["Cmd"]=[]):
+    super().__init__()
+    self.prompt = prompt
+    self.callback = callback
+    self.next = next
+
+def runCmdList(cmdList: List[Cmd]):
+  if len(cmdList) == 0:
+    print("命令列表为空")
+    return
+  cmdMap: Dict[int, Cmd] = {}
+  prompts = ["--- 可执行命令列表 ---"]
+  i = 0
+  for cmd in cmdList:
+    i += 1
+    cmdMap[i] = cmd
+    prompts.append("%s: %s" % (i, cmd.prompt))
+  prompts.append("------")
+  promptStr = "\n".join(prompts) + "\n"
+  result = -1
+  try:
+    result = questionInt(promptStr)
+  except KeyboardInterrupt:
+    print("您已取消输入")
+    return
+  while result not in cmdMap:
+    try:
+      result = questionInt("请输入有效命令")
+    except KeyboardInterrupt:
+      print("您已取消输入")
+      return
+  if cmdMap[result].callback:
+    cmdMap[result].callback()
+  if len(cmdMap[result].next) > 0:
+    runCmdList(cmdMap[result].next)
