@@ -17,7 +17,7 @@ setup(
     version='0.0.7',
     author='xiaomingtang',
     author_email='1038761793@qq.com',
-    url='https://pypi.org/project/tangUtils/',
+    url='https://github.com/xiaomingTang/python-utils',
     description=u'文件/目录相关utils',
     packages=['tangUtils'],
     install_requires=[
