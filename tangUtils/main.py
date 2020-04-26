@@ -433,12 +433,17 @@ class Cmd:
     self.callback = callback
     self.next = next
 
-def runCmdList(cmdList: List[Cmd]):
+def runCmdList(cmdList: List[Cmd]) -> bool:
+  """
+  返回值表示是否正常退出;
+  True为正常退出;
+  False表示非正常退出, 如"命令列表为空"或者"ctrl+c"退出等
+  """
   if len(cmdList) == 0:
     print("命令列表为空")
-    return
+    return False
   cmdMap: Dict[int, Cmd] = {}
-  prompts = ["--- 可执行命令列表 ---"]
+  prompts = ["", "--- 可执行命令列表 ---"]
   i = 0
   for cmd in cmdList:
     i += 1
@@ -451,14 +456,15 @@ def runCmdList(cmdList: List[Cmd]):
     result = questionInt(promptStr)
   except KeyboardInterrupt:
     print("您已取消输入")
-    return
+    return False
   while result not in cmdMap:
     try:
       result = questionInt("请输入有效命令")
     except KeyboardInterrupt:
       print("您已取消输入")
-      return
+      return False
   if cmdMap[result].callback:
     cmdMap[result].callback()
   if len(cmdMap[result].next) > 0:
     runCmdList(cmdMap[result].next)
+  return True

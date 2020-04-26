@@ -7,14 +7,14 @@ see
   https://pypi.org/project/twine/
 
 1. python setup.py sdist
-2. twine upload dist/tangUtils-0.0.8.tar.gz
+2. twine upload dist/tangUtils-0.0.10.tar.gz
 """
 
 from setuptools import setup
 
 setup(
     name='tangUtils',
-    version='0.0.8',
+    version='0.0.10',
     author='xiaomingtang',
     author_email='1038761793@qq.com',
     url='https://github.com/xiaomingTang/python-utils',

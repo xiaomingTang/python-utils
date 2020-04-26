@@ -39,6 +39,19 @@ class TangFtp(object):
     self.ftp = None
     return self
 
+  def __createDirIfNotExists(self, remoteDirPath: str):
+    oldDir = self.ftp.pwd()
+    if remoteDirPath[0] == "/":
+      self.ftp.cwd("/")
+    for subName in remoteDirPath.split("/"):
+      if bool(subName):
+        try:
+          self.ftp.cwd(subName)
+        except Exception:
+          self.ftp.mkd(subName)
+          self.ftp.cwd(subName)
+    self.ftp.cwd(oldDir)
+
   def __ftpDownload(self, fromRemotePath: str, toLocalPath: str) -> bool:
     buffSize = 1024
     success = True
@@ -54,10 +67,7 @@ class TangFtp(object):
     return success
 
   def __ftpUpload(self, fromLocalPath: str, toRemotePath: str) -> bool:
-    try:
-      self.ftp.mkd(toLatin(Base(toRemotePath).parent.path))
-    except Exception as e:
-      pass
+    self.__createDirIfNotExists(toLatin(Base(toRemotePath).parent.path))
     buffSize = 1024
     success = True
     # 这儿本地文件必须存在, 本来就是上传文件, 本地没有文件你上传什么? 所以就没判断
@@ -77,7 +87,8 @@ class TangFtp(object):
       print("%s / %s" % (i + 1, total), end="\r")
       relPath = os.path.relpath(base.path, self.localRoot)
       # 两点或者斜杠开头, 都不在目录中
-      if re.match(r"^[(\.\.)\\\/]", relPath):
+      if re.match(r"^(\.\.|\\|\/)", relPath):
+        print("--%s--%s--" % (base.path, relPath))
         print("文件错误: 【%s】不在根目录【%s】中" % (base.path, self.localRoot))
         return self
       remotePath = resolve(self.remoteRoot, relPath)
@@ -93,7 +104,7 @@ class TangFtp(object):
       print("%s / %s" % (i + 1, total), end="\r")
       relPath = os.path.relpath(base.path, self.localRoot)
       # 两点或者斜杠开头, 都不在目录中
-      if re.match(r"^[(\.\.)\\\/]", relPath):
+      if re.match(r"^(\.\.|\\|\/)", relPath):
         print("文件错误: 【%s】不在根目录【%s】中" % (base.path, self.localRoot))
         return self
       remotePath = resolve(self.remoteRoot, relPath)
