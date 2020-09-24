@@ -371,12 +371,13 @@ class Png(Img):
     assert self.isPng, "is not png: %s, mode: %s" % (self.path, self.obj.mode)
 
   def saveAs(self, p="", quality=90) -> "Png":
+    tempRoot = Base("/.tangUtils-pngquant-temp").createAsDir()
     p = p or self.path
     qualityStr = "%s-%s" % (quality, quality + 2)
-    newName = "%s-%s.png" % (str(random.random()), str(random.random()))
-    self.obj.save(newName)
-    subprocess.call("pngquant.exe --force --ext=.png --quality=%s %s" % (qualityStr, newName))
-    shutil.move(newName, p)
+    newPath = tempRoot.childOf("%s-%s.png" % (str(random.random()), str(random.random()))).path
+    self.obj.save(newPath)
+    subprocess.call("pngquant.exe --force --ext=.png --quality=%s %s" % (qualityStr, newPath))
+    shutil.move(newPath, p)
     return self
 
   def saveToJpg(self, p="", optimize=True, quality=94, progressive=True, subsampling=1) -> str:
