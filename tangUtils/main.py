@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from typing import Any, List, Tuple, Dict, Callable, TypeVar
-import os, random, subprocess, codecs, json, socket, webbrowser, shutil, re, sys
+import os, random, subprocess, codecs, json, socket, webbrowser, shutil, re, sys, math
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 """
 如果没有pillow, 详见 https://pillow.readthedocs.io/en/stable/installation.html
@@ -69,7 +69,7 @@ def createHttpServer(host: str=socket.gethostbyname(socket.gethostname()), port:
     print("KeyboardInterrupt")
     pass
   
-def question(q: str, defaultValue: str = None) -> str:
+def question(q: str, defaultValue: str) -> str:
   qStr = "%s 默认值【%s】" % (q, defaultValue) if defaultValue != None else q
   if defaultValue == None:
     while True:
@@ -93,7 +93,7 @@ def questionInt(q: str, defaultValue: int = None) -> int:
       except Exception:
         pass
   else:
-    assert isinstance(defaultValue, int), "wrong type: %s is not %s" % (defaultValue, int)
+    assert isinstance(defaultValue, int), "wrong type: %s is not int" % defaultValue
     while True:
       inputStr = input(qStr).strip()
       if inputStr == "":
@@ -113,7 +113,7 @@ def questionFloat(q: str, defaultValue: float = None) -> float:
       except Exception:
         pass
   else:
-    assert isinstance(defaultValue, float), "wrong type: %s is not %s" % (defaultValue, float)
+    assert isinstance(defaultValue, float), "wrong type: %s is not float" % defaultValue
     while True:
       inputStr = input(qStr).strip()
       if inputStr == "":
@@ -123,6 +123,18 @@ def questionFloat(q: str, defaultValue: float = None) -> float:
           return float(inputStr)
         except Exception:
           pass
+
+def questionBool(q: str, defaultValue: bool = False) -> bool:
+  qStr = "%s【Y/n】 默认值【%s】" % (q, "Y" if defaultValue else "n")
+  assert isinstance(defaultValue, bool), "wrong type: %s is not bool" % defaultValue
+  while True:
+    inputStr = input(qStr).strip().lower()
+    if inputStr == "":
+      return defaultValue
+    if inputStr == "y":
+      return True
+    if inputStr == "n":
+      return False
 
 class Base(object):
   # 规范路径
@@ -189,16 +201,6 @@ class Base(object):
   def isDir(self) -> bool:
     return os.path.isdir(self.path)
 
-  @property
-  def isImg(self) -> bool:
-    if not self.isFile:
-      return False
-    try:
-      Image.open(self.path)
-    except Exception as e:
-      return False
-    return True
-  
   def toAbsPath(self) -> "Base":
     self.path = os.path.abspath(self.path).replace("\\", "/")
     return self
@@ -330,6 +332,9 @@ class Img(File):
   def isPng(self) -> bool:
     return self.obj.mode == "RGBA" or (self.suffix.lower() == ".png" and self.obj.mode.lower() == "p")
 
+  def close(self):
+    self.obj.close()
+
   def resize(self, size: Tuple[int, int], resample=Image.LANCZOS) -> "Img":
     self.obj = self.obj.resize(size, resample=resample)
     return self
@@ -410,7 +415,7 @@ class Json(File):
     self.path = os.path.abspath(self.path).replace("\\", "/")
     return self
 
-def getInputFiles():
+def getInputFiles() -> List["File"]:
   files = []
   for arg in sys.argv[1:]:
     base = Base(arg)
@@ -469,3 +474,32 @@ def runCmdList(cmdList: List[Cmd]) -> bool:
   if len(cmdMap[result].next) > 0:
     runCmdList(cmdMap[result].next)
   return True
+
+Size = Tuple[int, int]
+
+def resizeWithin(origin: Size, target: Size) -> Size:
+  """
+  originW / originH == targetW / targetH
+  """
+  originW, originH = origin
+  targetW, targetH = target
+  if 0 in [originW, originH, targetW, targetH]:
+    raise Exception("尺寸不得含有0")
+  if originW < 0 or originH < 0:
+    raise Exception("源尺寸必须均大于0")
+  # 不允许是其他负数, 是为了防止使用者误输入
+  if (targetW < 0 and targetW != -1) or (targetH < 0 and targetH != -1):
+    raise Exception("目标尺寸不得为其他负数 (但可以为-1, 表示以另一个正数为标准, 保持比例缩放)")
+  if targetW < 0 and targetH < 0:
+    raise Exception("目标尺寸不得同时为负数")
+
+  aspect = originW / originH
+
+  if targetW < 0:
+    return (math.floor(aspect * targetH), targetH)
+  if targetH < 0:
+    return (targetW, math.floor(targetW / aspect))
+  if aspect < targetW / targetH: # 瘦高, 以高为准
+    return (math.floor(aspect * targetH), targetH)
+  # 否则以宽为准
+  return (targetW, math.floor(targetW / aspect))
