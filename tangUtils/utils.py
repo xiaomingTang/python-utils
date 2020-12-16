@@ -5,6 +5,7 @@ Arg = Union[str, int, float]
 ListArg = List[Arg]
 DictArg = Dict[str, Union[Arg, List[Arg]]]
 
+# forCmd: 将会为含有空格的参数包裹上引号
 def toWin(p: str, forCmd=False) -> str:
   winP = re.sub("/", "\\\\", p.strip())
   if forCmd and re.match(r'\S+\s', winP):

@@ -69,7 +69,7 @@ def createHttpServer(host: str=socket.gethostbyname(socket.gethostname()), port:
     print("KeyboardInterrupt")
     pass
   
-def question(q: str, defaultValue: str) -> str:
+def question(q: str, defaultValue: str = None) -> str:
   qStr = "%s 默认值【%s】" % (q, defaultValue) if defaultValue != None else q
   if defaultValue == None:
     while True:
