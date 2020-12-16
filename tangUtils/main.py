@@ -194,6 +194,16 @@ class Base(object):
     return Base(self.dirname, *p)
 
   @property
+  def isImg(self) -> bool:
+    _isImg = False
+    try:
+      with Image.open(self.path) as img:
+        _isImg = True
+    except Exception:
+      pass
+    return _isImg
+
+  @property
   def isFile(self) -> bool:
     return os.path.isfile(self.path)
   
@@ -323,14 +333,17 @@ class Img(File):
   def __init__(self, *p: str):
     super(Img, self).__init__(*p)
     self.obj = Image.open(self.path)
+    assert self.isImg, "is not img: %s" % self.path
   
   @property
   def isJpg(self) -> bool:
-    return self.obj.mode == "RGB" or (self.suffix.lower() == ".jpg" and self.obj.mode.lower() == "p")
+    # return self.obj.mode == "RGB" or (self.suffix.lower() == ".jpg" and self.obj.mode.lower() == "p")
+    return self.suffix.lower() in [".jpg", ".jpeg"]
 
   @property
   def isPng(self) -> bool:
-    return self.obj.mode == "RGBA" or (self.suffix.lower() == ".png" and self.obj.mode.lower() == "p")
+    # return self.obj.mode == "RGBA" or (self.suffix.lower() == ".png" and self.obj.mode.lower() == "p")
+    return self.suffix.lower() == ".png"
 
   def close(self):
     self.obj.close()
@@ -342,6 +355,10 @@ class Img(File):
   def toAbsPath(self) -> "Img":
     self.path = os.path.abspath(self.path).replace("\\", "/")
     return self
+
+  # args 是 Image.save 的参数
+  def saveAs(self, p="", **args):
+    self.obj.save(p or self.path, **args)
 
 class Jpg(Img):
   def __init__(self, *p: str):
