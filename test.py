@@ -1,5 +1,6 @@
 from tangUtils.main import Base
 import os, sys
+from tangUtils.mail import Email
 
 def showDetail(b: Base):
   print("\n--- test start ---")
@@ -16,6 +17,12 @@ def showDetail(b: Base):
 
 testFilePath = __file__
 
-fBase = Base(testFilePath).toAbsPath().parent
+# fBase = Base(testFilePath).toAbsPath().parent
 
-showDetail(fBase.childOf("dist").siblingOf("README.md"))
+# showDetail(fBase.childOf("dist").siblingOf("README.md"))
+
+em = Email(fromAddr=("王小明", "103354@qq.com"), password="pass", smtpServer="fjdaskl")
+em.sendTo([
+  "11111@qq.com",
+  ("xiaohong小红", "22222@qq.com"),
+], "subject主题", "content内容")
