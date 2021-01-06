@@ -4,9 +4,9 @@
 from typing import Any, List, Tuple, Dict, Callable, TypeVar
 import os, random, subprocess, codecs, json, socket, webbrowser, shutil, re, sys, math
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-"""
-如果没有pillow, 详见 https://pillow.readthedocs.io/en/stable/installation.html
-pip install pillow
+""" pillow
+  如果没有pillow, 详见 https://pillow.readthedocs.io/en/stable/installation.html
+  pip install pillow
 """
 from PIL import Image
 
@@ -226,6 +226,12 @@ class Base(object):
       with open(self.path, "w") as f:
         pass
     return File(self.path)
+
+  def asFile(self) -> "File":
+    return File(self.path)
+
+  def asDir(self) -> "Dir":
+    return Dir(self.path)
 
 class File(Base):
   def __init__(self, *p: str):

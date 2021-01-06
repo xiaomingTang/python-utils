@@ -2,21 +2,20 @@ from tangUtils.main import Base
 import os, sys
 
 def showDetail(b: Base):
-  print("\n--- test ---")
-  print("path ->".rjust(13, " "), b.path)
-  print("dirname ->".rjust(13, " "), b.dirname)
-  print("basename ->".rjust(13, " "), b.basename)
-  print("name ->".rjust(13, " "), b.name)
-  print("suffix ->".rjust(13, " "), b.suffix)
-  print("fakeName ->".rjust(13, " "), b.fakeName)
-  print("fakeSuffix ->".rjust(13, " "), b.fakeSuffix)
-  print("isFile ->".rjust(13, " "), b.isFile)
-  print("isDir ->".rjust(13, " "), b.isDir)
-  print("--- test ---\n")
+  print("\n--- test start ---")
+  print("path".ljust(10, " "), " -> ", b.path)
+  print("dirname".ljust(10, " "), " -> ", b.dirname)
+  print("basename".ljust(10, " "), " -> ", b.basename)
+  print("name".ljust(10, " "), " -> ", b.name)
+  print("suffix".ljust(10, " "), " -> ", b.suffix)
+  print("fakeName".ljust(10, " "), " -> ", b.fakeName)
+  print("fakeSuffix".ljust(10, " "), " -> ", b.fakeSuffix)
+  print("isFile".ljust(10, " "), " -> ", b.isFile)
+  print("isDir".ljust(10, " "), " -> ", b.isDir)
+  print("--- test end ---\n")
 
 testFilePath = __file__
-testDirPath = "./"
 
 fBase = Base(testFilePath).toAbsPath().parent
 
-showDetail(fBase.childOf("dist").siblingOf("test.py"))
+showDetail(fBase.childOf("dist").siblingOf("README.md"))
