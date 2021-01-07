@@ -1,15 +1,24 @@
 from typing import Union, List, Tuple
-from smtplib import SMTP
+from smtplib import SMTP_SSL, SMTP_SSL_PORT
+from tangUtils.main import File
+
 from email import encoders
 from email.header import Header
-from email.utils import formataddr
+from email.utils import formataddr, formatdate, COMMASPACE
 
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 
 Addr = Union[str, Tuple[str, str]]
+
+DefaultPlainText = "您的客户端无法显示此类型的消息, 请换用其它客户端以查看该超文本内容(text/html)"
+
+def _encode(s: str) -> str:
+  return Header(s, "utf-8").encode()
+
 
 def _decodeAddr(_addr: Addr) -> Tuple[str, str]:
   """
@@ -31,7 +40,7 @@ def _decodeAddr(_addr: Addr) -> Tuple[str, str]:
 
 def _formatAddr(_addr: Addr):
   name, addr = _decodeAddr(_addr)
-  encodedName = Header(name, "utf-8").encode()
+  encodedName = _encode(name)
   return formataddr((encodedName, addr))
 
 
@@ -40,44 +49,63 @@ class Email(object):
   fromName: str
   # 发件人邮箱地址
   fromAddr: str
-  # 发件人邮箱密码
+  # 发件人邮箱授权码
   password: str
-  # SMTP服务器地址
+  # SMTP服务器地址, 默认为 qq 邮箱: "smtp.qq.com"
   smtpServer: str
+  # SMTP服务器端口, 默认为 SMTP_SSL_PORT
+  smtpPort: int
+  # SMTP_SSL
+  server: SMTP_SSL
+  # 登录标记
+  loginFlag = False
 
-  __server: SMTP
-
-  def __init__(self, fromAddr: Addr, password: str, smtpServer: str):
+  def __init__(self, fromAddr: Addr, password: str, smtpServer="smtp.qq.com", smtpPort=SMTP_SSL_PORT, debugLevel=1):
     super().__init__()
     self.fromName, self.fromAddr = _decodeAddr(fromAddr)
     self.password = password
     self.smtpServer = smtpServer
+    self.smtpPort = smtpPort
+    self.setServer(smtpServer, smtpPort, debugLevel)
+
+  def setServer(self, smtpServer="smtp.qq.com", smtpPort=SMTP_SSL_PORT, debugLevel=1):
+    self.server = SMTP_SSL(self.smtpServer, self.smtpPort)
+    self.loginFlag = False
+    self.server.set_debuglevel(debugLevel)
+    return self
 
   def login(self):
-    self.quit()
-    # SMTP协议默认端口是25
-    __server = SMTP(self.smtpServer, 25)
-    __server.set_debuglevel(1)
-    __server.login(self.fromAddr, self.password)
-    self.__server = __server
+    self.server.login(self.fromAddr, self.password)
+    self.loginFlag = True
     return self
 
   def quit(self):
-    if self.__server:
-      self.__server.quit()
+    self.server.quit()
+    self.loginFlag = False
     return self
 
-  def sendTo(self, toAddr: List[Addr], subject="", content=""):
+  def sendTo(self, toAddr: List[Addr], subject="", fallbackText=DefaultPlainText, html="", attachment: List[File] = []):
+    if not self.loginFlag:
+      self.login()
+    # 如果登录之后, 登录标记依旧为否, 则取消消息发送
+    if not self.loginFlag:
+      raise Exception("登录失败")
     msg = MIMEMultipart("alternative")
     msg["From"] = _formatAddr((self.fromName, self.fromAddr))
-    msg["To"] = ",".join([_formatAddr(item) for item in toAddr])
-    msg["Subject"] = Header(subject, "utf-8").encode()
+    msg["To"] = COMMASPACE.join([_formatAddr(item) for item in toAddr])
+    msg["Date"] = formatdate(localtime=True)
+    msg["Subject"] = _encode(subject)
 
-    msg.attach(MIMEText("hello", "plain", "utf-8"))
-    msg.attach(MIMEText("<html><body><h1>Hello</h1></body></html>", "html", "utf-8"))
+    msg.attach(MIMEText(fallbackText, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
 
-    # self.__server.sendmail(self.fromAddr, [
-    #   _decodeAddr(item)[1] for item in toAddr
-    # ], msg.as_string())
+    for idx, f in enumerate(attachment):
+      with open(f.path, "rb") as fil:
+        part = MIMEApplication(fil.read(), Name=f.basename)
+      part["Content-Disposition"] = 'attachment; filename="%s"' % _encode(f.basename)
+      part.add_header("content-ID", "<%s>" % idx)
+      msg.attach(part)
 
-    print(msg.as_string())
+    self.server.sendmail(self.fromAddr, [
+      _decodeAddr(item)[1] for item in toAddr
+    ], msg.as_string())

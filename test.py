@@ -1,4 +1,4 @@
-from tangUtils.main import Base
+from tangUtils.main import Base, File
 import os, sys
 from tangUtils.mail import Email
 
@@ -21,8 +21,24 @@ testFilePath = __file__
 
 # showDetail(fBase.childOf("dist").siblingOf("README.md"))
 
-em = Email(fromAddr=("王小明", "103354@qq.com"), password="pass", smtpServer="fjdaskl")
+em = Email(fromAddr=("王小明", "10086@qq.com"), password="your auth code", debugLevel=0)
 em.sendTo([
-  "11111@qq.com",
-  ("xiaohong小红", "22222@qq.com"),
-], "subject主题", "content内容")
+  ("联通", "10010@qq.com"),
+  ("电信", "10000@qq.com"),
+], subject="来自王小明的提醒", fallbackText="你已经接收到了来自王小明的提醒", html="""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div>您已接收到来自<strong>王小明</strong>的提示</div>
+  <img src="cid:1" alt="一张图片">
+</body>
+</html>
+""", attachment=[
+  File("./README.md").toAbsPath(),
+  File("/path/to/image.jpg").toAbsPath(),
+])
