@@ -8,14 +8,14 @@
 
   # 执行下列命令前, 需要先更新版本号
   1. python setup.py sdist
-  2. twine upload dist/tangUtils-0.0.20.tar.gz
+  2. twine upload dist/tangUtils-0.1.0.tar.gz
 """
 
 from setuptools import setup
 
 setup(
   name='tangUtils',
-  version='0.0.20',
+  version='0.1.0',
   author='xiaomingtang',
   author_email='1038761793@qq.com',
   url='https://github.com/xiaomingTang/python-utils',
