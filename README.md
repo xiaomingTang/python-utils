@@ -1,14 +1,19 @@
-# tangUtils
+# [tangUtils](https://github.com/xiaomingTang/python-utils) [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 根据个人使用习惯, 将一些 文件、目录、命令行交互 相关操作做了一个语法糖
 
-## examples
+## Installation
+``` cmd
+> pip install tangUtils
+```
+
+## Examples
 ``` python
-from tangUtils.main import File
+from tangUtils.main import Dir
 from tangUtils.mail import Mail
 
-root = File(__file__).parent
-
 em = Mail(fromAddr=("王小明", "10086@qq.com"), password="your auth code")
+
+files = Dir("/path/to/dir").files
 toAddr = [
   "10000@qq.com",
   ("王钢蛋", "10010@qq.com"),
@@ -26,6 +31,8 @@ html="""
   </body>
   </html>
 """
-em.sendTo(toAddr=toAddr, subject=subject, fallbackText=fallbackText, html=html, attachment=root.files)
+
+em.sendTo(toAddr=toAddr, subject=subject, fallbackText=fallbackText, html=html, attachment=files)
+
 em.quit()
 ```
