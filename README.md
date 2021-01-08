@@ -1,4 +1,7 @@
-# [tangUtils](https://github.com/xiaomingTang/python-utils) [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
+# [tangUtils](https://github.com/xiaomingTang/python-utils)
+[![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
+
+## Description
 根据个人使用习惯, 将一些 文件、目录、命令行交互 相关操作做了一个语法糖
 
 ## Installation
