@@ -185,13 +185,35 @@ class Base(object):
 
   @property
   def parent(self) -> "Base":
+    """
+    @warning 警告, 根目录的 parent 是其自身
+    """
     return Base(self.dirname)
+
+  @property
+  def parents(self) -> List["Base"]:
+    """
+    @warning 警告, 根目录的 parent 是其自身, 但 parents 是一个空数组
+    """
+    p = self.parent
+    if self.sameAs(p):
+      return []
+    parents = [p]
+    parents.extend(p.parents)
+    return parents
 
   def childOf(self, *p: str) -> "Base":
     return Base(self.path, *p)
 
   def siblingOf(self, *p: str) -> "Base":
     return Base(self.dirname, *p)
+
+  def sameAs(self, base) -> bool:
+    if not base:
+      return False
+    if self == base:
+      return True
+    return resolve(self.path) == resolve(base.path)
 
   @property
   def isImg(self) -> bool:
@@ -445,8 +467,7 @@ def getInputFiles() -> List["File"]:
     if base.isFile:
       files.append(File(arg))
     elif base.isDir:
-      for f in Dir(arg).allFiles:
-        files.append(f)
+      files.extend(Dir(arg).allFiles)
   return files
 
 Callback = Callable[[], None]

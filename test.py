@@ -1,5 +1,5 @@
 from tangUtils.main import Base, File
-import os, sys
+import os, sys, time
 
 def showDetail(b: Base):
   print("\n--- test start ---")
