@@ -47,9 +47,9 @@ from PIL import Image
 
 def resolve(*args: str) -> str:
   """
-  不同于 Node.js 中的 path.resolve, 此处并非返回绝对路径, 而是规范化的路径
+  返回绝对路径, 并将 "\\" 转为 "/"
   """
-  return os.path.normpath(os.path.join(*args)).replace("\\", "/")
+  return os.path.abspath(os.path.join(*args)).replace("\\", "/")
 
 def createIfNotExists(dirPath: str) -> "Dir":
   if not os.path.isdir(dirPath):
@@ -68,7 +68,7 @@ def createHttpServer(host: str=socket.gethostbyname(socket.gethostname()), port:
   except KeyboardInterrupt:
     print("KeyboardInterrupt")
     pass
-  
+
 def question(q: str, defaultValue: str = None) -> str:
   qStr = "%s 默认值【%s】" % (q, defaultValue) if defaultValue != None else q
   if defaultValue == None:
@@ -186,7 +186,7 @@ class Base(object):
   @property
   def parent(self) -> "Base":
     """
-    @warning 警告, 根目录的 parent 是其自身
+    @warning 警告, 根目录的 parent 是其自身, 但 parents 是一个空数组
     """
     return Base(self.dirname)
 
@@ -213,7 +213,7 @@ class Base(object):
       return False
     if self == base:
       return True
-    return resolve(self.path) == resolve(base.path)
+    return self.path == base.path
 
   @property
   def isImg(self) -> bool:
@@ -228,20 +228,22 @@ class Base(object):
   @property
   def isFile(self) -> bool:
     return os.path.isfile(self.path)
-  
+
   @property
   def isDir(self) -> bool:
     return os.path.isdir(self.path)
 
   def toAbsPath(self) -> "Base":
-    self.path = os.path.abspath(self.path).replace("\\", "/")
+    """
+    deprecated
+    """
     return self
 
   def createAsDir(self) -> "Dir":
     if not self.isDir:
       os.makedirs(self.path)
     return Dir(self.path)
-  
+
   def createAsFile(self) -> "File":
     if not self.isFile:
       self.parent.createAsDir()
@@ -271,7 +273,7 @@ class File(Base):
   @property
   def parent(self) -> "Dir":
     return Dir(self.dirname)
-  
+
   def read(self, encoding="UTF-8") -> str:
     result = ""
     with codecs.open(self.path, "r", encoding=encoding) as f:
@@ -285,12 +287,14 @@ class File(Base):
 
   def write(self, s: str, encoding="UTF-8") -> "File":
     return self.__write(s, "w", encoding=encoding)
-  
+
   def aWrite(self, s: str, encoding="UTF-8") -> "File":
     return self.__write(s, "a", encoding=encoding)
-  
+
   def toAbsPath(self) -> "File":
-    self.path = os.path.abspath(self.path).replace("\\", "/")
+    """
+    deprecated
+    """
     return self
 
 class Dir(Base):
@@ -304,20 +308,20 @@ class Dir(Base):
 
   @property
   def fileNames(self) -> List[str]:
-    return [f for f in os.listdir(self.path) if os.path.isfile(resolve(self.path, f))]
-  
+    return [f for f in os.listdir(self.path) if os.path.isfile(os.path.join(self.path, f))]
+
   @property
   def files(self) -> List["File"]:
     return [File(self.path, f) for f in self.fileNames]
-  
+
   @property
   def dirNames(self) -> List[str]:
-    return [d for d in os.listdir(self.path) if os.path.isdir(resolve(self.path, d))]
-  
+    return [d for d in os.listdir(self.path) if os.path.isdir(os.path.join(self.path, d))]
+
   @property
   def dirs(self) -> List["Dir"]:
     return [Dir(self.path, d) for d in self.dirNames]
-  
+
   @property
   def allDirs(self) -> List["Dir"]:
     dirs = [d for d in self.dirs]
@@ -347,9 +351,11 @@ class Dir(Base):
       if not Dir(self.path, d.basename).includes(d):
         return False
     return True
-  
+
   def toAbsPath(self) -> "Dir":
-    self.path = os.path.abspath(self.path).replace("\\", "/")
+    """
+    deprecated
+    """
     return self
 
 class Img(File):
@@ -362,7 +368,7 @@ class Img(File):
     super(Img, self).__init__(*p)
     self.obj = Image.open(self.path)
     assert self.isImg, "is not img: %s" % self.path
-  
+
   @property
   def isJpg(self) -> bool:
     # return self.obj.mode == "RGB" or (self.suffix.lower() == ".jpg" and self.obj.mode.lower() == "p")
@@ -379,9 +385,11 @@ class Img(File):
   def resize(self, size: Tuple[int, int], resample=Image.LANCZOS) -> "Img":
     self.obj = self.obj.resize(size, resample=resample)
     return self
-  
+
   def toAbsPath(self) -> "Img":
-    self.path = os.path.abspath(self.path).replace("\\", "/")
+    """
+    deprecated
+    """
     return self
 
   # args 是 Image.save 的参数
@@ -392,11 +400,11 @@ class Jpg(Img):
   def __init__(self, *p: str):
     super(Jpg, self).__init__(*p)
     assert self.isJpg, "is not jpg: %s, mode: %s" % (self.path, self.obj.mode)
-  
+
   def saveAs(self, p="", optimize=True, quality=90, progressive=True, subsampling=1) -> "Jpg":
     self.obj.save(p or self.path, format="JPEG", optimize=optimize, quality=quality, progressive=progressive, subsampling=subsampling)
     return self
-  
+
   # quality = 0 时，不压缩
   def saveToPng(self, p="", quality=0) -> str:
     p = p or self.path
@@ -404,7 +412,7 @@ class Jpg(Img):
     base.parent.createAsDir()
     suffix = ".png"
     name = base.fakeName if base.fakeSuffix.lower() == suffix else base.basename
-    targetPath = resolve(base.dirname, "%s%s" % (name, suffix))
+    targetPath = os.path.join(base.dirname, "%s%s" % (name, suffix))
     rgba = self.obj.convert("RGBA")
     rgba.save(targetPath)
     if quality > 0:
@@ -412,7 +420,9 @@ class Jpg(Img):
     return targetPath
 
   def toAbsPath(self) -> "Jpg":
-    self.path = os.path.abspath(self.path).replace("\\", "/")
+    """
+    deprecated
+    """
     return self
 
 class Png(Img):
@@ -436,13 +446,15 @@ class Png(Img):
     base.parent.createAsDir()
     suffix = ".jpg"
     name = base.fakeName if base.fakeSuffix.lower() == suffix else base.basename
-    targetPath = resolve(base.dirname, "%s%s" % (name, suffix))
+    targetPath = os.path.join(base.dirname, "%s%s" % (name, suffix))
     rgb = self.obj.convert("RGB")
     rgb.save(targetPath, optimize=optimize, quality=quality, progressive=progressive, subsampling=subsampling)
     return targetPath
 
   def toAbsPath(self) -> "Png":
-    self.path = os.path.abspath(self.path).replace("\\", "/")
+    """
+    deprecated
+    """
     return self
 
 class Json(File):
@@ -457,7 +469,9 @@ class Json(File):
     return self
 
   def toAbsPath(self) -> "Json":
-    self.path = os.path.abspath(self.path).replace("\\", "/")
+    """
+    deprecated
+    """
     return self
 
 def getInputFiles() -> List["File"]:
@@ -500,7 +514,8 @@ def runCmdList(cmdList: List[Cmd]) -> bool:
     cmdMap[i] = cmd
     prompts.append("%s: %s" % (i, cmd.prompt))
   prompts.append("------")
-  promptStr = "\n".join(prompts) + "\n"
+  prompts.append("")
+  promptStr = "\n".join(prompts) + "请输入命令编号: "
   result = -1
   try:
     result = questionInt(promptStr)
@@ -509,7 +524,7 @@ def runCmdList(cmdList: List[Cmd]) -> bool:
     return False
   while result not in cmdMap:
     try:
-      result = questionInt("请输入有效命令")
+      result = questionInt("请输入有效命令: ")
     except KeyboardInterrupt:
       print("您已取消输入")
       return False

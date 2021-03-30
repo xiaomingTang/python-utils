@@ -1,4 +1,4 @@
-from tangUtils.main import Base, File
+from tangUtils.main import Base, File, runCmdList, Cmd
 import os, sys, time
 
 def showDetail(b: Base):
@@ -6,6 +6,7 @@ def showDetail(b: Base):
   print("path".ljust(10, " "), " -> ", b.path)
   print("dirname".ljust(10, " "), " -> ", b.dirname)
   print("basename".ljust(10, " "), " -> ", b.basename)
+  # 如果输入值是 Base, 则 name 等于 basename
   print("name".ljust(10, " "), " -> ", b.name)
   print("suffix".ljust(10, " "), " -> ", b.suffix)
   print("fakeName".ljust(10, " "), " -> ", b.fakeName)
