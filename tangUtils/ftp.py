@@ -2,7 +2,7 @@
 from typing import List
 import os, shutil, re, sys
 from ftplib import FTP
-from tangUtils.main import resolve, Base, File, Dir, question
+from tangUtils.main import join, Base, File, Dir, question
 
 def toLatin(p: str):
   return p.encode("utf-8").decode("latin1")
@@ -91,7 +91,7 @@ class TangFtp(object):
         print("--%s--%s--" % (base.path, relPath))
         print("文件错误: 【%s】不在根目录【%s】中" % (base.path, self.localRoot))
         return self
-      remotePath = resolve(self.remoteRoot, relPath)
+      remotePath = join(self.remoteRoot, relPath)
       if base.isFile:
         self.__ftpUpload(base.path, remotePath)
       elif base.isDir:
@@ -107,7 +107,7 @@ class TangFtp(object):
       if re.match(r"^(\.\.|\\|\/)", relPath):
         print("文件错误: 【%s】不在根目录【%s】中" % (base.path, self.localRoot))
         return self
-      remotePath = resolve(self.remoteRoot, relPath)
+      remotePath = join(self.remoteRoot, relPath)
       if base.isFile:
         self.__ftpDownload(remotePath, base.path)
       elif base.isDir:

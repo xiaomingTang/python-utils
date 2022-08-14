@@ -8,7 +8,7 @@
 
   # 执行下列命令前, 需要先更新版本号
   1. python setup.py sdist
-  2. twine upload dist/tangUtils-0.2.0.tar.gz
+  2. twine upload dist/tangUtils-0.2.1.tar.gz
 """
 
 from setuptools import setup
@@ -18,7 +18,7 @@ with open("README.md", mode="r", encoding="UTF-8") as f:
 
 setup(
   name="tangUtils",
-  version="0.2.0",
+  version="0.2.1",
   author="xiaomingtang",
   author_email="1038761793@qq.com",
   url="https://github.com/xiaomingTang/python-utils",

@@ -49,7 +49,10 @@ def resolve(*args: str) -> str:
   """
   返回绝对路径, 并将 "\\" 转为 "/"
   """
-  return os.path.abspath(os.path.join(*args)).replace("\\", "/")
+  return os.path.abspath(os.path.join(*args)).replace(os.sep, "/")
+
+def join(*args: str, **kwargs):
+  return os.path.join(*args, **kwargs).replace(os.sep, '/')
 
 def createIfNotExists(dirPath: str) -> "Dir":
   if not os.path.isdir(dirPath):
